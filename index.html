@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Airbnb Deal Doctor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="background-glow glow-left"></div>
+    <div class="background-glow glow-right"></div>
+
+    <main class="app-shell">
+      <section class="hero-card">
+        <div class="hero-copy">
+          <span class="eyebrow">Arbitrage locatif</span>
+          <h1>Airbnb Deal Doctor 👨🏻‍⚕️</h1>
+          <p>
+            Estime rapidement si un bien a le potentiel pour devenir un bon
+            deal en location courte durée.
+          </p>
+        </div>
+
+        <div class="hero-badges">
+          <div class="badge">
+            <span class="badge-label">Cashflow mensuel moyen</span>
+            <strong id="heroCashflow">0 €</strong>
+          </div>
+          <div class="badge">
+            <span class="badge-label">ROI annuel sur cash investi</span>
+            <strong id="heroAnnualRoi">0 %</strong>
+          </div>
+          <div class="badge verdict" id="heroVerdict">
+            <span class="badge-label">Verdict</span>
+            <strong>Analyse en cours</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-grid">
+        <form class="panel form-panel" id="simulatorForm">
+          <div class="panel-header">
+            <h2>Données du bien</h2>
+            <button type="button" class="ghost-button" id="resetButton">
+              Réinitialiser
+            </button>
+          </div>
+
+          <div class="input-grid">
+            <label class="input-group">
+              <span>Loyer mensuel</span>
+              <div class="input-shell">
+                <input type="number" id="monthlyRent" min="0" step="50" value="1200" />
+                <span class="input-suffix">€</span>
+              </div>
+            </label>
+
+            <label class="input-group">
+              <span>Revenu mensuel</span>
+              <div class="input-shell">
+                <input type="number" id="monthlyRevenueInput" min="0" step="50" value="3500" />
+                <span class="input-suffix">€</span>
+              </div>
+            </label>
+
+            <label class="input-group">
+              <span>Décoration et équipement</span>
+              <div class="input-shell">
+                <input type="number" id="setupCost" min="0" step="100" value="6500" />
+                <span class="input-suffix">€</span>
+              </div>
+            </label>
+
+            <label class="input-group">
+              <span>Caution / dépôt de garantie</span>
+              <div class="input-shell">
+                <input type="number" id="securityDeposit" min="0" step="100" value="1200" />
+                <span class="input-suffix">€</span>
+              </div>
+            </label>
+
+            <label class="input-group">
+              <span>Commission Agent</span>
+              <div class="input-shell">
+                <input type="number" id="agencyFees" min="0" step="50" value="800" />
+                <span class="input-suffix">€</span>
+              </div>
+            </label>
+
+            <label class="input-group">
+              <span>Frais de ménage (mensuel)</span>
+              <div class="input-shell">
+                <input type="number" id="cleaningCost" min="0" step="10" value="180" />
+                <span class="input-suffix">€</span>
+              </div>
+            </label>
+
+            <label class="input-group">
+              <span>Charges mensuelles (eau, élec, gaz)</span>
+              <div class="input-shell">
+                <input type="number" id="utilities" min="0" step="10" value="180" />
+                <span class="input-suffix">€</span>
+              </div>
+            </label>
+
+          </div>
+        </form>
+
+        <section class="results-column">
+          <div class="panel score-panel">
+            <div class="panel-header">
+              <h2>Score du deal</h2>
+              <span class="status-pill" id="statusPill">En attente</span>
+            </div>
+
+            <div class="score-ring-wrap">
+              <div class="score-ring" id="scoreRing">
+                <div class="score-ring-inner">
+                  <span class="score-label">Score</span>
+                  <strong id="dealScore">0</strong>
+                  <span class="score-scale">/100</span>
+                </div>
+              </div>
+            </div>
+
+            <p class="verdict-text" id="verdictText">
+              Renseigne les données pour obtenir un verdict.
+            </p>
+          </div>
+
+          <div class="panel metrics-panel">
+            <div class="panel-header">
+              <h2>Résultats clés</h2>
+            </div>
+
+            <div class="metrics-grid">
+              <article class="metric-card">
+                <span>Revenu mensuel</span>
+                <strong id="monthlyRevenueDisplay">0 €</strong>
+              </article>
+              <article class="metric-card">
+                <span>Revenu annuel estimé</span>
+                <strong id="annualRevenue">0 €</strong>
+              </article>
+              <article class="metric-card">
+                <span>Bénéfice net mensuel moyen</span>
+                <strong id="monthlyProfit">0 €</strong>
+              </article>
+              <article class="metric-card">
+                <span>Marge nette</span>
+                <strong id="netMargin">0 %</strong>
+              </article>
+              <article class="metric-card">
+                <span>ROI annuel sur cash investi</span>
+                <strong id="annualRoi">0 %</strong>
+              </article>
+              <article class="metric-card">
+                <span>Multiplicateur</span>
+                <strong id="revenueMultiplier">0x</strong>
+              </article>
+              <article class="metric-card">
+                <span>Cash investi initial</span>
+                <strong id="cashInvestedMetric">0 €</strong>
+              </article>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="panel seasonality-panel full-width-panel">
+        <div class="panel-header seasonality-header">
+          <div>
+            <h2>Calendrier de saisonnalité</h2>
+            <p class="panel-subtitle">
+              Le revenu mensuel est annualisé puis réparti mois par mois selon le profil choisi,
+              puis on calcule le bénéfice après toutes les charges.
+            </p>
+          </div>
+
+          <div class="seasonality-toggle" id="seasonalityToggle">
+            <button type="button" class="seasonality-option" data-seasonality="low">
+              Faible
+            </button>
+            <button type="button" class="seasonality-option is-active" data-seasonality="medium">
+              Moyenne
+            </button>
+            <button type="button" class="seasonality-option" data-seasonality="high">
+              Forte
+            </button>
+          </div>
+        </div>
+
+        <div class="seasonality-meta">
+          <span id="seasonalityLabel">Saisonnalité moyenne</span>
+          <div class="seasonality-meta-values">
+            <strong id="seasonalityAnnualProfit">0 €</strong>
+            <span id="seasonalityMonthlyCashflow">0 €</span>
+          </div>
+        </div>
+
+        <div class="seasonality-chart-scroll">
+          <div class="seasonality-chart" id="seasonalityChart"></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
