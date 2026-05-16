@@ -15,6 +15,9 @@ const SEASONALITY_STORAGE_KEY = "airbnb-simulator-seasonality";
 const REVENUE_MODE_STORAGE_KEY = "airbnb-simulator-revenue-mode";
 const DEFAULT_SEASONALITY = "medium";
 const DEFAULT_REVENUE_MODE = "monthly";
+const IS_LOCAL_DEV =
+  ["localhost", "127.0.0.1"].includes(window.location.hostname) ||
+  window.location.protocol === "file:";
 const MONTH_LABELS = [
   "Jan",
   "Fév",
@@ -114,10 +117,20 @@ function cleanAuthUrl() {
 }
 
 function updateAuthView(session) {
+  if (IS_LOCAL_DEV) {
+    authShell.classList.add("is-hidden");
+    appShell.classList.remove("app-shell--hidden");
+    sessionEmail.textContent = "Mode local (sans connexion)";
+    logoutButton.hidden = true;
+    render();
+    return;
+  }
+
   const isAuthenticated = Boolean(session);
 
   authShell.classList.toggle("is-hidden", isAuthenticated);
   appShell.classList.toggle("app-shell--hidden", !isAuthenticated);
+  logoutButton.hidden = !isAuthenticated;
 
   if (isAuthenticated) {
     cleanAuthUrl();
@@ -557,6 +570,15 @@ async function initializeApp() {
   loadSavedSeasonality();
   loadSavedRevenueMode();
   loadSavedValues();
+
+  if (IS_LOCAL_DEV) {
+    updateAuthView({
+      user: {
+        email: "Mode local (sans connexion)",
+      },
+    });
+    return;
+  }
 
   supabaseClient.auth.onAuthStateChange((_event, session) => {
     updateAuthView(session);

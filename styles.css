@@ -332,11 +332,19 @@ body {
   gap: 10px;
 }
 
+.input-group--toggle {
+  position: relative;
+}
+
 .input-group-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+}
+
+.input-group--toggle .input-group-header {
+  display: block;
 }
 
 .input-group span {
@@ -347,11 +355,14 @@ body {
 .revenue-toggle {
   display: inline-flex;
   gap: 6px;
-  padding: 4px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
   flex-shrink: 0;
+  align-items: center;
+}
+
+.input-group--toggle .revenue-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
 }
 
 .revenue-mode-option {
@@ -360,23 +371,31 @@ body {
   background: transparent;
   color: var(--muted);
   font: inherit;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  padding: 7px 11px;
-  border-radius: 999px;
+  padding: 0;
   cursor: pointer;
-  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+  transition: color 0.18s ease, text-decoration-color 0.18s ease, transform 0.18s ease;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 4px;
 }
 
 .revenue-mode-option:hover {
   color: var(--text);
   transform: translateY(-1px);
+  text-decoration-color: currentColor;
 }
 
 .revenue-mode-option.is-active {
   color: var(--text);
-  background: linear-gradient(135deg, rgba(124, 92, 255, 0.28), rgba(36, 210, 181, 0.22));
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  text-decoration-color: currentColor;
+}
+
+.revenue-toggle-separator {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .input-shell {
@@ -717,6 +736,15 @@ body {
   .input-group-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .input-group--toggle .revenue-toggle {
+    position: static;
+    margin-top: 8px;
+  }
+
+  .input-group--toggle .input-group-header {
+    display: flex;
   }
 
   .seasonality-chart {
