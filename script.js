@@ -517,7 +517,7 @@ async function logout() {
 
 function resetValues() {
   ids.forEach((id) => {
-    inputs[id].value = "";
+    inputs[id].value = "0";
   });
   activeSeasonality = DEFAULT_SEASONALITY;
   activeRevenueMode = DEFAULT_REVENUE_MODE;
