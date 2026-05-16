@@ -517,10 +517,11 @@ async function logout() {
 
 function resetValues() {
   ids.forEach((id) => {
-    inputs[id].value = DEFAULTS[id];
+    inputs[id].value = "";
   });
   activeSeasonality = DEFAULT_SEASONALITY;
   activeRevenueMode = DEFAULT_REVENUE_MODE;
+  localStorage.removeItem(STORAGE_KEY);
   saveSeasonality(activeSeasonality);
   saveRevenueMode(activeRevenueMode);
   render();
