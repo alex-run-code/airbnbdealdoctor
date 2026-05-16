@@ -1,16 +1,20 @@
 const DEFAULTS = {
   monthlyRent: 1200,
-  monthlyRevenueInput: 3500,
+  revenueInput: 3500,
   setupCost: 6500,
   securityDeposit: 1200,
   agencyFees: 800,
   cleaningCost: 180,
   utilities: 180,
 };
+const SUPABASE_URL = "https://xextjgbcageyajtbulra.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_31I3Gv9V5aBGSA-tsWT3uA_9DA5CK1A";
 
 const STORAGE_KEY = "airbnb-simulator-values";
 const SEASONALITY_STORAGE_KEY = "airbnb-simulator-seasonality";
+const REVENUE_MODE_STORAGE_KEY = "airbnb-simulator-revenue-mode";
 const DEFAULT_SEASONALITY = "medium";
+const DEFAULT_REVENUE_MODE = "monthly";
 const MONTH_LABELS = [
   "Jan",
   "Fév",
@@ -42,7 +46,25 @@ const SEASONALITY_PROFILES = {
 
 const ids = Object.keys(DEFAULTS);
 const inputs = Object.fromEntries(ids.map((id) => [id, document.getElementById(id)]));
+const authShell = document.getElementById("authShell");
+const appShell = document.getElementById("appShell");
+const authForm = document.getElementById("authForm");
+const authEmail = document.getElementById("authEmail");
+const authMessage = document.getElementById("authMessage");
+const authSubmitButton = document.getElementById("authSubmitButton");
+const logoutButton = document.getElementById("logoutButton");
+const sessionEmail = document.getElementById("sessionEmail");
+const revenueInput = document.getElementById("revenueInput");
+const seasonalitySubtitle = document.getElementById("seasonalitySubtitle");
 let activeSeasonality = DEFAULT_SEASONALITY;
+let activeRevenueMode = DEFAULT_REVENUE_MODE;
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+});
 
 const currencyFormatter = new Intl.NumberFormat("fr-FR", {
   style: "currency",
@@ -71,6 +93,44 @@ function formatSignedCurrency(value) {
   return `${value > 0 ? "+" : "-"}${formatCurrency(Math.abs(value))}`;
 }
 
+function setAuthMessage(message, variant = "") {
+  authMessage.textContent = message;
+  authMessage.className = `auth-message${variant ? ` is-${variant}` : ""}`;
+}
+
+function setAuthSubmitting(isSubmitting) {
+  authSubmitButton.disabled = isSubmitting;
+  authSubmitButton.textContent = isSubmitting ? "Envoi en cours..." : "Envoyer le lien magique";
+}
+
+function cleanAuthUrl() {
+  const shouldCleanHash = window.location.hash.includes("access_token");
+  const shouldCleanQuery =
+    window.location.search.includes("code=") || window.location.search.includes("token_hash=");
+
+  if (shouldCleanHash || shouldCleanQuery) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+}
+
+function updateAuthView(session) {
+  const isAuthenticated = Boolean(session);
+
+  authShell.classList.toggle("is-hidden", isAuthenticated);
+  appShell.classList.toggle("app-shell--hidden", !isAuthenticated);
+
+  if (isAuthenticated) {
+    cleanAuthUrl();
+    sessionEmail.textContent = session.user.email || "Session active";
+    render();
+    return;
+  }
+
+  sessionEmail.textContent = "...";
+  setAuthSubmitting(false);
+  setAuthMessage("Renseigne ton email pour recevoir le lien de connexion.");
+}
+
 function readValues() {
   return ids.reduce((acc, id) => {
     const rawValue = Number.parseFloat(inputs[id].value);
@@ -85,6 +145,10 @@ function saveValues(values) {
 
 function saveSeasonality(profile) {
   localStorage.setItem(SEASONALITY_STORAGE_KEY, profile);
+}
+
+function saveRevenueMode(mode) {
+  localStorage.setItem(REVENUE_MODE_STORAGE_KEY, mode);
 }
 
 function loadSavedValues() {
@@ -112,13 +176,36 @@ function loadSavedSeasonality() {
   }
 }
 
+function loadSavedRevenueMode() {
+  const raw = localStorage.getItem(REVENUE_MODE_STORAGE_KEY);
+  if (raw === "monthly" || raw === "annual") {
+    activeRevenueMode = raw;
+  }
+}
+
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
+function updateRevenueModeButtons() {
+  document.querySelectorAll(".revenue-mode-option").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.revenueMode === activeRevenueMode);
+  });
+}
+
+function updateRevenueContext() {
+  seasonalitySubtitle.textContent =
+    activeRevenueMode === "annual"
+      ? "Le revenu annuel est réparti mois par mois selon le profil choisi, puis on calcule le bénéfice après toutes les charges."
+      : "Le revenu mensuel est annualisé puis réparti mois par mois selon le profil choisi, puis on calcule le bénéfice après toutes les charges.";
+
+  revenueInput.step = activeRevenueMode === "annual" ? "500" : "50";
+}
+
 function calculateMetrics(values, seasonalityKey) {
-  const totalRevenue = values.monthlyRevenueInput;
-  const annualRevenue = totalRevenue * 12;
+  const inputRevenue = values.revenueInput;
+  const totalRevenue = activeRevenueMode === "annual" ? inputRevenue / 12 : inputRevenue;
+  const annualRevenue = activeRevenueMode === "annual" ? inputRevenue : totalRevenue * 12;
   const cleaningExpense = values.cleaningCost;
 
   const fixedCosts = values.monthlyRent + values.utilities + cleaningExpense;
@@ -150,6 +237,7 @@ function calculateMetrics(values, seasonalityKey) {
   const seasonalAnnualProfit = monthlyDetails.reduce((sum, month) => sum + month.profit, 0);
 
   return {
+    inputRevenue,
     annualRevenue,
     lodgingRevenue: totalRevenue,
     totalRevenue,
@@ -168,7 +256,8 @@ function calculateMetrics(values, seasonalityKey) {
 
 function getSeasonalityScaleMax(values) {
   const fixedCosts = values.monthlyRent + values.utilities + values.cleaningCost;
-  const annualRevenue = values.monthlyRevenueInput * 12;
+  const annualRevenue =
+    activeRevenueMode === "annual" ? values.revenueInput : values.revenueInput * 12;
 
   const maxMonthlyProfit = Object.values(SEASONALITY_PROFILES).reduce((currentMax, profile) => {
     const profileMax = profile.distribution.reduce((distributionMax, share) => {
@@ -365,8 +454,52 @@ function render() {
   document.getElementById("revenueMultiplier").textContent = `${percentFormatter.format(metrics.revenueMultiplier)}x`;
   document.getElementById("cashInvestedMetric").textContent = formatCurrency(metrics.cashInvested);
 
+  updateRevenueModeButtons();
+  updateRevenueContext();
   updateSeasonalityButtons();
   renderSeasonalityChart(metrics, seasonalityScaleMax);
+}
+
+async function sendMagicLink(event) {
+  event.preventDefault();
+
+  const email = authEmail.value.trim();
+  if (!email) {
+    setAuthMessage("Entre une adresse email valide pour recevoir le lien.", "error");
+    return;
+  }
+
+  setAuthSubmitting(true);
+  setAuthMessage("Envoi du lien magique en cours...");
+
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: `${window.location.origin}${window.location.pathname}`,
+      shouldCreateUser: false,
+    },
+  });
+
+  setAuthSubmitting(false);
+
+  if (error) {
+    setAuthMessage(error.message || "Impossible d'envoyer le lien magique.", "error");
+    return;
+  }
+
+  authForm.reset();
+  setAuthMessage("Lien envoyé. Ouvre ton email puis clique sur le lien pour te connecter.", "success");
+}
+
+async function logout() {
+  const { error } = await supabaseClient.auth.signOut();
+
+  if (error) {
+    setAuthMessage(error.message || "Impossible de te déconnecter pour le moment.", "error");
+    return;
+  }
+
+  updateAuthView(null);
 }
 
 function resetValues() {
@@ -374,7 +507,27 @@ function resetValues() {
     inputs[id].value = DEFAULTS[id];
   });
   activeSeasonality = DEFAULT_SEASONALITY;
+  activeRevenueMode = DEFAULT_REVENUE_MODE;
   saveSeasonality(activeSeasonality);
+  saveRevenueMode(activeRevenueMode);
+  render();
+}
+
+function switchRevenueMode(nextMode) {
+  if (nextMode === activeRevenueMode) {
+    return;
+  }
+
+  const currentRawValue = revenueInput.value.trim();
+  const currentNumericValue = Number.parseFloat(currentRawValue);
+
+  if (currentRawValue !== "" && Number.isFinite(currentNumericValue)) {
+    const convertedValue = nextMode === "annual" ? currentNumericValue * 12 : currentNumericValue / 12;
+    revenueInput.value = String(Math.round(convertedValue * 10) / 10);
+  }
+
+  activeRevenueMode = nextMode;
+  saveRevenueMode(activeRevenueMode);
   render();
 }
 
@@ -390,8 +543,30 @@ document.querySelectorAll(".seasonality-option").forEach((button) => {
   });
 });
 
+document.querySelectorAll(".revenue-mode-option").forEach((button) => {
+  button.addEventListener("click", () => {
+    switchRevenueMode(button.dataset.revenueMode);
+  });
+});
+
+authForm.addEventListener("submit", sendMagicLink);
+logoutButton.addEventListener("click", logout);
 document.getElementById("resetButton").addEventListener("click", resetValues);
 
-loadSavedSeasonality();
-loadSavedValues();
-render();
+async function initializeApp() {
+  loadSavedSeasonality();
+  loadSavedRevenueMode();
+  loadSavedValues();
+
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    updateAuthView(session);
+  });
+
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  updateAuthView(session);
+}
+
+initializeApp();

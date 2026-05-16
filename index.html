@@ -16,7 +16,42 @@
     <div class="background-glow glow-left"></div>
     <div class="background-glow glow-right"></div>
 
-    <main class="app-shell">
+    <section class="auth-shell" id="authShell">
+      <div class="auth-card panel">
+        <span class="eyebrow">Accès privé</span>
+        <h2>Connexion sécurisée</h2>
+        <p class="auth-copy">
+          Entre ton email pour recevoir un lien magique. Une fois connecté, la session
+          restera active sur ce navigateur.
+        </p>
+
+        <form class="auth-form" id="authForm">
+          <label class="input-group auth-input-group">
+            <span>Email</span>
+            <div class="input-shell">
+              <input
+                type="email"
+                id="authEmail"
+                class="auth-input"
+                placeholder="ton@email.com"
+                autocomplete="email"
+                required
+              />
+            </div>
+          </label>
+
+          <button type="submit" class="primary-button" id="authSubmitButton">
+            Envoyer le lien magique
+          </button>
+        </form>
+
+        <p class="auth-message" id="authMessage">
+          Renseigne ton email pour recevoir le lien de connexion.
+        </p>
+      </div>
+    </section>
+
+    <main class="app-shell app-shell--hidden" id="appShell">
       <section class="hero-card">
         <div class="hero-copy">
           <span class="eyebrow">Arbitrage locatif</span>
@@ -25,6 +60,16 @@
             Estime rapidement si un bien a le potentiel pour devenir un bon
             deal en location courte durée.
           </p>
+
+          <div class="session-strip">
+            <div class="session-meta">
+              <span class="session-label">Connecté en tant que</span>
+              <strong id="sessionEmail">...</strong>
+            </div>
+            <button type="button" class="ghost-button" id="logoutButton">
+              Se déconnecter
+            </button>
+          </div>
         </div>
 
         <div class="hero-badges">
@@ -62,9 +107,19 @@
             </label>
 
             <label class="input-group">
-              <span>Revenu mensuel</span>
+              <div class="input-group-header">
+                <span>Revenu Airbnb</span>
+                <div class="revenue-toggle" id="revenueToggle">
+                  <button type="button" class="revenue-mode-option is-active" data-revenue-mode="monthly">
+                    Mensuel
+                  </button>
+                  <button type="button" class="revenue-mode-option" data-revenue-mode="annual">
+                    Annuel
+                  </button>
+                </div>
+              </div>
               <div class="input-shell">
-                <input type="number" id="monthlyRevenueInput" min="0" step="50" value="3500" />
+                <input type="number" id="revenueInput" min="0" step="50" value="3500" />
                 <span class="input-suffix">€</span>
               </div>
             </label>
@@ -177,7 +232,7 @@
         <div class="panel-header seasonality-header">
           <div>
             <h2>Calendrier de saisonnalité</h2>
-            <p class="panel-subtitle">
+            <p class="panel-subtitle" id="seasonalitySubtitle">
               Le revenu mensuel est annualisé puis réparti mois par mois selon le profil choisi,
               puis on calcule le bénéfice après toutes les charges.
             </p>
@@ -210,6 +265,7 @@
       </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="./script.js"></script>
   </body>
 </html>
