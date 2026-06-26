@@ -59,8 +59,32 @@ const logoutButton = document.getElementById("logoutButton");
 const sessionEmail = document.getElementById("sessionEmail");
 const revenueInput = document.getElementById("revenueInput");
 const seasonalitySubtitle = document.getElementById("seasonalitySubtitle");
+const legislationForm = document.getElementById("legislationForm");
+const legislationCityInput = document.getElementById("legislationCityInput");
+const legislationSubmitButton = document.getElementById("legislationSubmitButton");
+const legislationFeedback = document.getElementById("legislationFeedback");
+const legislationEmptyState = document.getElementById("legislationEmptyState");
+const legislationLoadingState = document.getElementById("legislationLoadingState");
+const legislationErrorState = document.getElementById("legislationErrorState");
+const legislationResult = document.getElementById("legislationResult");
+const legislationResultCity = document.getElementById("legislationResultCity");
+const legislationResultMeta = document.getElementById("legislationResultMeta");
+const legislationResultStatus = document.getElementById("legislationResultStatus");
+const legislationSummary = document.getElementById("legislationSummary");
+const legislationKeyPoints = document.getElementById("legislationKeyPoints");
+const legislationCaution = document.getElementById("legislationCaution");
+const legislationSources = document.getElementById("legislationSources");
+const legislationNearby = document.getElementById("legislationNearby");
+const legislationNearbyIntro = document.getElementById("legislationNearbyIntro");
+const legislationNearbyList = document.getElementById("legislationNearbyList");
 let activeSeasonality = DEFAULT_SEASONALITY;
 let activeRevenueMode = DEFAULT_REVENUE_MODE;
+const legislationCache = new Map();
+const legislationState = {
+  isLoading: false,
+  error: "",
+  result: null,
+};
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     persistSession: true,
@@ -94,6 +118,14 @@ function formatSignedCurrency(value) {
   }
 
   return `${value > 0 ? "+" : "-"}${formatCurrency(Math.abs(value))}`;
+}
+
+function formatDistance(distanceKm) {
+  if (!Number.isFinite(distanceKm)) {
+    return "";
+  }
+
+  return `${percentFormatter.format(distanceKm)} km`;
 }
 
 function setAuthMessage(message, variant = "") {
@@ -213,6 +245,410 @@ function updateRevenueContext() {
       : "Le revenu mensuel est annualisé puis réparti mois par mois selon le profil choisi, puis on calcule le bénéfice après toutes les charges.";
 
   revenueInput.step = activeRevenueMode === "annual" ? "500" : "50";
+}
+
+function setLegislationFeedback(message, variant = "") {
+  legislationFeedback.textContent = message;
+  legislationFeedback.className = `legislation-feedback${variant ? ` is-${variant}` : ""}`;
+}
+
+function setLegislationLoading(isLoading) {
+  legislationState.isLoading = isLoading;
+  legislationSubmitButton.disabled = isLoading;
+  legislationSubmitButton.textContent = isLoading
+    ? "Analyse en cours..."
+    : "Analyser la législation";
+}
+
+function getLegislationStatusConfig(status) {
+  switch (status) {
+    case "blue":
+      return {
+        label: "Bleu",
+        tone: "Très accessible",
+        className: "legislation-chip--blue",
+      };
+    case "green":
+      return {
+        label: "Vert",
+        tone: "Faisable",
+        className: "legislation-chip--green",
+      };
+    case "yellow":
+      return {
+        label: "Jaune",
+        tone: "À cadrer",
+        className: "legislation-chip--yellow",
+      };
+    default:
+      return {
+        label: "Rouge",
+        tone: "Très contraint",
+        className: "legislation-chip--red",
+      };
+  }
+}
+
+function formatConfidenceLabel(confidence) {
+  switch (confidence) {
+    case "high":
+      return "élevée";
+    case "low":
+      return "prudente";
+    default:
+      return "moyenne";
+  }
+}
+
+function toRadians(value) {
+  return (value * Math.PI) / 180;
+}
+
+function getDistanceKm(lat1, lon1, lat2, lon2) {
+  if (![lat1, lon1, lat2, lon2].every((value) => Number.isFinite(value))) {
+    return Number.NaN;
+  }
+
+  const earthRadiusKm = 6371;
+  const deltaLat = toRadians(lat2 - lat1);
+  const deltaLon = toRadians(lon2 - lon1);
+  const a =
+    Math.sin(deltaLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(deltaLon / 2) ** 2;
+
+  return earthRadiusKm * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
+function readCommuneCoordinates(item) {
+  if (!item?.centre || !Array.isArray(item.centre.coordinates) || item.centre.coordinates.length < 2) {
+    return {
+      latitude: undefined,
+      longitude: undefined,
+    };
+  }
+
+  const [longitude, latitude] = item.centre.coordinates;
+
+  return {
+    latitude: Number.isFinite(latitude) ? latitude : undefined,
+    longitude: Number.isFinite(longitude) ? longitude : undefined,
+  };
+}
+
+function normalizeGeoCommune(item, fallbackContext = {}) {
+  const coordinates = readCommuneCoordinates(item);
+
+  return {
+    name: item.nom || "",
+    code: item.code || "",
+    departmentCode: item.departement?.code || fallbackContext.departmentCode || "",
+    departmentName: item.departement?.nom || fallbackContext.departmentName || "",
+    regionCode: item.region?.code || fallbackContext.regionCode || "",
+    regionName: item.region?.nom || fallbackContext.regionName || "",
+    population: Number.isFinite(item.population) ? item.population : 0,
+    postalCodes: Array.isArray(item.codesPostaux) ? item.codesPostaux : [],
+    latitude: coordinates.latitude,
+    longitude: coordinates.longitude,
+  };
+}
+
+async function fetchJson(url) {
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error("La requête de données publiques a échoué.");
+  }
+
+  return response.json();
+}
+
+async function searchFrenchCommune(query) {
+  const params = new URLSearchParams({
+    nom: query,
+    boost: "population",
+    limit: "5",
+    fields: "nom,code,population,codesPostaux,centre,departement,region",
+    format: "json",
+    geometry: "centre",
+  });
+
+  const results = await fetchJson(`https://geo.api.gouv.fr/communes?${params.toString()}`);
+  if (!Array.isArray(results) || results.length === 0) {
+    return null;
+  }
+
+  return results
+    .map((item) => normalizeGeoCommune(item))
+    .find((item) => item.name && item.code && Number.isFinite(item.latitude) && Number.isFinite(item.longitude));
+}
+
+async function fetchNearbyCommunes(targetCommune) {
+  if (!targetCommune?.departmentCode || !Number.isFinite(targetCommune.latitude) || !Number.isFinite(targetCommune.longitude)) {
+    return [];
+  }
+
+  const params = new URLSearchParams({
+    fields: "nom,code,population,codesPostaux,centre",
+    format: "json",
+    geometry: "centre",
+  });
+
+  const results = await fetchJson(
+    `https://geo.api.gouv.fr/departements/${targetCommune.departmentCode}/communes?${params.toString()}`,
+  );
+
+  if (!Array.isArray(results)) {
+    return [];
+  }
+
+  return results
+    .map((item) =>
+      normalizeGeoCommune(item, {
+        departmentCode: targetCommune.departmentCode,
+        departmentName: targetCommune.departmentName,
+        regionCode: targetCommune.regionCode,
+        regionName: targetCommune.regionName,
+      }),
+    )
+    .filter((item) => item.code && item.code !== targetCommune.code)
+    .map((item) => ({
+      ...item,
+      distanceKm: getDistanceKm(
+        targetCommune.latitude,
+        targetCommune.longitude,
+        item.latitude,
+        item.longitude,
+      ),
+    }))
+    .filter((item) => Number.isFinite(item.distanceKm) && item.distanceKm <= 35)
+    .sort((left, right) => {
+      if (left.distanceKm !== right.distanceKm) {
+        return left.distanceKm - right.distanceKm;
+      }
+
+      return (right.population || 0) - (left.population || 0);
+    })
+    .slice(0, 18);
+}
+
+function mergeNearbySuggestions(suggestions, nearbyCommunes) {
+  const nearbyMap = new Map(nearbyCommunes.map((item) => [item.code, item]));
+
+  return (Array.isArray(suggestions) ? suggestions : [])
+    .map((suggestion) => {
+      const commune = nearbyMap.get(suggestion.communeCode);
+      if (!commune) {
+        return null;
+      }
+
+      return {
+        ...commune,
+        status: suggestion.status,
+        reason: suggestion.reason,
+      };
+    })
+    .filter(Boolean);
+}
+
+async function invokeLegislationAnalysis(targetCommune, nearbyCommunes) {
+  const cacheKey = targetCommune.code;
+  if (legislationCache.has(cacheKey)) {
+    return legislationCache.get(cacheKey);
+  }
+
+  const { data, error } = await supabaseClient.functions.invoke("city-legislation", {
+    body: {
+      targetCommune,
+      nearbyCommunes,
+    },
+  });
+
+  if (error) {
+    throw new Error("Impossible d'interroger le moteur législation pour le moment.");
+  }
+
+  legislationCache.set(cacheKey, data);
+  return data;
+}
+
+function renderLegislation() {
+  const hasResult = Boolean(legislationState.result);
+  const hasError = Boolean(legislationState.error);
+
+  legislationEmptyState.classList.toggle(
+    "is-hidden",
+    legislationState.isLoading || hasError || hasResult,
+  );
+  legislationLoadingState.classList.toggle("is-hidden", !legislationState.isLoading);
+  legislationErrorState.classList.toggle("is-hidden", !hasError);
+  legislationResult.classList.toggle("is-hidden", !hasResult);
+
+  if (hasError) {
+    legislationErrorState.textContent = legislationState.error;
+    setLegislationFeedback(
+      "Le moteur n'a pas pu finaliser l'analyse. Tu peux réessayer avec une autre commune ou relancer dans un instant.",
+      "error",
+    );
+  } else if (!legislationState.isLoading && !hasResult) {
+    setLegislationFeedback(
+      "Recherche France uniquement. Résumé informatif à confirmer auprès de la mairie ou du service urbanisme.",
+    );
+  }
+
+  if (!hasResult) {
+    return;
+  }
+
+  const { target, nearbySuggestions } = legislationState.result;
+  const statusConfig = getLegislationStatusConfig(target.status);
+
+  legislationResultCity.textContent = target.cityName;
+  legislationResultMeta.textContent =
+    `${target.departmentName} · ${target.regionName} · Fiabilité ${formatConfidenceLabel(target.confidence)}`;
+  legislationResultStatus.textContent = `${statusConfig.label} · ${statusConfig.tone}`;
+  legislationResultStatus.className = `legislation-chip ${statusConfig.className}`;
+  legislationSummary.textContent = target.summary;
+  legislationCaution.textContent = target.caution;
+
+  legislationKeyPoints.innerHTML = "";
+  target.keyPoints.forEach((point) => {
+    const item = document.createElement("li");
+    item.textContent = point;
+    legislationKeyPoints.appendChild(item);
+  });
+
+  legislationSources.innerHTML = "";
+  if (target.sources.length > 0) {
+    target.sources.forEach((source) => {
+      const link = document.createElement("a");
+      link.href = source.url;
+      link.target = "_blank";
+      link.rel = "noreferrer";
+      link.className = "legislation-source-link";
+      link.textContent = source.title;
+      legislationSources.appendChild(link);
+    });
+  } else {
+    const fallback = document.createElement("span");
+    fallback.className = "nearby-card-meta";
+    fallback.textContent = "Sources officielles à revalider manuellement pour cette commune.";
+    legislationSources.appendChild(fallback);
+  }
+
+  const showNearby = ["yellow", "red"].includes(target.status) && nearbySuggestions.length > 0;
+  legislationNearby.classList.toggle("is-hidden", !showNearby);
+
+  if (showNearby) {
+    legislationNearbyIntro.textContent =
+      target.status === "red"
+        ? "Dans cette zone, le modèle paraît tendu. Voici des communes proches qui semblent offrir un cadre plus favorable ou plus simple à creuser."
+        : "Le cadre semble jouable mais encadré. Voici des communes proches à comparer pour trouver un terrain plus fluide.";
+
+    legislationNearbyList.innerHTML = "";
+    nearbySuggestions.forEach((suggestion) => {
+      const status = getLegislationStatusConfig(suggestion.status);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "nearby-card";
+      button.addEventListener("click", () => {
+        legislationCityInput.value = suggestion.name;
+        analyzeCityLegislation(suggestion);
+      });
+
+      const titleRow = document.createElement("div");
+      titleRow.className = "nearby-card-head";
+
+      const title = document.createElement("strong");
+      title.textContent = suggestion.name;
+
+      const chip = document.createElement("span");
+      chip.className = `legislation-chip ${status.className}`;
+      chip.textContent = status.label;
+
+      titleRow.appendChild(title);
+      titleRow.appendChild(chip);
+
+      const meta = document.createElement("span");
+      meta.className = "nearby-card-meta";
+      meta.textContent = suggestion.distanceKm
+        ? `${formatDistance(suggestion.distanceKm)} environ`
+        : "Commune proche";
+
+      const reason = document.createElement("p");
+      reason.className = "nearby-card-reason";
+      reason.textContent = suggestion.reason;
+
+      button.appendChild(titleRow);
+      button.appendChild(meta);
+      button.appendChild(reason);
+      legislationNearbyList.appendChild(button);
+    });
+  }
+}
+
+async function analyzeCityLegislation(targetCommune) {
+  try {
+    legislationState.error = "";
+    legislationState.result = null;
+    setLegislationLoading(true);
+    setLegislationFeedback("On vérifie la commune et on prépare un résumé clair.", "loading");
+    renderLegislation();
+
+    const nearbyCommunes = await fetchNearbyCommunes(targetCommune);
+    const analysis = await invokeLegislationAnalysis(targetCommune, nearbyCommunes);
+    const mergedSuggestions = mergeNearbySuggestions(analysis.nearbySuggestions, nearbyCommunes);
+
+    legislationState.result = {
+      target: analysis.target,
+      nearbySuggestions: mergedSuggestions,
+    };
+    setLegislationFeedback(
+      "Analyse prête. Garde en tête qu'un dernier contrôle local reste toujours utile avant de lancer le projet.",
+      "success",
+    );
+  } catch (error) {
+    legislationState.error =
+      error instanceof Error
+        ? error.message
+        : "Impossible d'analyser cette commune pour le moment.";
+  } finally {
+    setLegislationLoading(false);
+    renderLegislation();
+  }
+}
+
+async function handleLegislationSubmit(event) {
+  event.preventDefault();
+
+  const query = legislationCityInput.value.trim();
+  if (!query) {
+    legislationState.error = "Entre une commune française pour lancer l'analyse.";
+    legislationState.result = null;
+    renderLegislation();
+    return;
+  }
+
+  try {
+    legislationState.error = "";
+    legislationState.result = null;
+    setLegislationLoading(true);
+    setLegislationFeedback("On recherche la commune la plus pertinente en France.", "loading");
+    renderLegislation();
+
+    const targetCommune = await searchFrenchCommune(query);
+
+    if (!targetCommune) {
+      throw new Error("Aucune commune française claire n'a été trouvée pour cette recherche.");
+    }
+
+    legislationCityInput.value = targetCommune.name;
+    await analyzeCityLegislation(targetCommune);
+  } catch (error) {
+    legislationState.error =
+      error instanceof Error ? error.message : "Impossible de rechercher cette commune.";
+    setLegislationLoading(false);
+    renderLegislation();
+  }
 }
 
 function calculateMetrics(values, seasonalityKey) {
@@ -566,11 +1002,13 @@ document.querySelectorAll(".revenue-mode-option").forEach((button) => {
 authForm.addEventListener("submit", sendMagicLink);
 logoutButton.addEventListener("click", logout);
 document.getElementById("resetButton").addEventListener("click", resetValues);
+legislationForm.addEventListener("submit", handleLegislationSubmit);
 
 async function initializeApp() {
   loadSavedSeasonality();
   loadSavedRevenueMode();
   loadSavedValues();
+  renderLegislation();
 
   if (IS_LOCAL_DEV) {
     updateAuthView({

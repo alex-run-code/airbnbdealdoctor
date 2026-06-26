@@ -278,6 +278,10 @@ body {
   margin-top: 24px;
 }
 
+.is-hidden {
+  display: none !important;
+}
+
 .panel + .panel {
   margin-top: 24px;
 }
@@ -300,6 +304,275 @@ body {
   color: var(--muted);
   line-height: 1.6;
   max-width: 60ch;
+}
+
+.legislation-panel {
+  overflow: hidden;
+}
+
+.legislation-header {
+  align-items: flex-start;
+}
+
+.legislation-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: end;
+}
+
+.legislation-search-group {
+  gap: 10px;
+}
+
+.legislation-city-input {
+  padding-right: 14px !important;
+}
+
+.legislation-submit {
+  white-space: nowrap;
+}
+
+.legislation-feedback {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.legislation-feedback.is-loading {
+  color: #d9ceff;
+}
+
+.legislation-feedback.is-success {
+  color: #b8ffe8;
+}
+
+.legislation-feedback.is-error {
+  color: #ffd4da;
+}
+
+.legislation-state {
+  margin-top: 18px;
+  padding: 18px 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.035);
+  line-height: 1.7;
+}
+
+.legislation-state--empty {
+  color: var(--muted);
+}
+
+.legislation-state--loading {
+  color: #d9ceff;
+}
+
+.legislation-state--error {
+  color: #ffd4da;
+  border-color: rgba(255, 107, 125, 0.24);
+  background: rgba(255, 107, 125, 0.09);
+}
+
+.legislation-result {
+  margin-top: 18px;
+  padding: 22px;
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02)),
+    rgba(8, 17, 29, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.legislation-result-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.legislation-result-label {
+  display: inline-block;
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin-bottom: 8px;
+}
+
+.legislation-result h3 {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+}
+
+.legislation-result-meta {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.legislation-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: 0.84rem;
+  font-weight: 800;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.legislation-chip--blue {
+  color: #7fd2ff;
+  background: rgba(24, 136, 239, 0.16);
+  border-color: rgba(24, 136, 239, 0.34);
+}
+
+.legislation-chip--green {
+  color: #b8ffe8;
+  background: rgba(43, 225, 139, 0.16);
+  border-color: rgba(43, 225, 139, 0.3);
+}
+
+.legislation-chip--yellow {
+  color: #ffd28f;
+  background: rgba(255, 184, 77, 0.16);
+  border-color: rgba(255, 184, 77, 0.3);
+}
+
+.legislation-chip--red {
+  color: #ffd4da;
+  background: rgba(255, 107, 125, 0.14);
+  border-color: rgba(255, 107, 125, 0.3);
+}
+
+.legislation-summary {
+  margin: 20px 0 0;
+  font-size: 1.02rem;
+  line-height: 1.75;
+  color: #eef4ff;
+  max-width: 72ch;
+}
+
+.legislation-points {
+  margin: 18px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 10px;
+  color: #dbe6f8;
+}
+
+.legislation-points li {
+  line-height: 1.6;
+}
+
+.legislation-caution {
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+
+.legislation-sources {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.legislation-sources-label {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.legislation-source-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.legislation-source-link {
+  color: #d9ceff;
+  text-decoration: none;
+  padding: 10px 12px;
+  border-radius: 999px;
+  background: rgba(124, 92, 255, 0.1);
+  border: 1px solid rgba(124, 92, 255, 0.2);
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.legislation-source-link:hover {
+  transform: translateY(-1px);
+  border-color: rgba(124, 92, 255, 0.34);
+  background: rgba(124, 92, 255, 0.16);
+}
+
+.legislation-nearby {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.legislation-nearby-header h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.legislation-nearby-header p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 70ch;
+}
+
+.legislation-nearby-list {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.nearby-card {
+  appearance: none;
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 18px;
+  color: var(--text);
+  padding: 16px;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.nearby-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(124, 92, 255, 0.28);
+  background: rgba(124, 92, 255, 0.08);
+}
+
+.nearby-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nearby-card-head strong {
+  font-size: 1rem;
+}
+
+.nearby-card-meta {
+  display: inline-block;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.nearby-card-reason {
+  margin: 10px 0 0;
+  color: #dbe6f8;
+  line-height: 1.6;
 }
 
 .ghost-button {
@@ -706,6 +979,10 @@ body {
     grid-template-columns: 1fr;
   }
 
+  .legislation-nearby-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .session-strip {
     align-items: flex-start;
     flex-direction: column;
@@ -730,6 +1007,11 @@ body {
 
   .input-grid,
   .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .legislation-search,
+  .legislation-nearby-list {
     grid-template-columns: 1fr;
   }
 
@@ -768,5 +1050,13 @@ body {
   .score-ring-inner {
     width: 126px;
     height: 126px;
+  }
+
+  .legislation-result {
+    padding: 18px;
+  }
+
+  .legislation-result-header {
+    flex-direction: column;
   }
 }

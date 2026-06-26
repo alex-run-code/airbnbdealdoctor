@@ -229,6 +229,86 @@
         </section>
       </section>
 
+      <section class="panel legislation-panel full-width-panel">
+        <div class="panel-header legislation-header">
+          <div>
+            <h2>Assistant législation par ville</h2>
+            <p class="panel-subtitle">
+              Entre une commune française pour obtenir un résumé clair du cadre local en
+              location courte durée, puis découvre des villes proches plus accessibles si le
+              contexte est tendu.
+            </p>
+          </div>
+        </div>
+
+        <form class="legislation-search" id="legislationForm">
+          <label class="input-group legislation-search-group">
+            <span>Ville analysée</span>
+            <div class="input-shell">
+              <input
+                type="text"
+                id="legislationCityInput"
+                class="legislation-city-input"
+                placeholder="Ex. Nice, Bordeaux, Annecy..."
+                autocomplete="address-level2"
+              />
+            </div>
+          </label>
+
+          <button type="submit" class="primary-button legislation-submit" id="legislationSubmitButton">
+            Analyser la législation
+          </button>
+        </form>
+
+        <div class="legislation-feedback" id="legislationFeedback">
+          Recherche France uniquement. Résumé informatif à confirmer auprès de la mairie ou
+          du service urbanisme.
+        </div>
+
+        <div class="legislation-state legislation-state--empty" id="legislationEmptyState">
+          Saisis une commune pour voir immédiatement si le cadre paraît accessible, encadré
+          ou très contraint.
+        </div>
+
+        <div class="legislation-state legislation-state--loading is-hidden" id="legislationLoadingState">
+          Analyse en cours...
+        </div>
+
+        <div class="legislation-state legislation-state--error is-hidden" id="legislationErrorState"></div>
+
+        <article class="legislation-result is-hidden" id="legislationResult">
+          <div class="legislation-result-header">
+            <div>
+              <span class="legislation-result-label">Commune analysée</span>
+              <h3 id="legislationResultCity">-</h3>
+              <p class="legislation-result-meta" id="legislationResultMeta">-</p>
+            </div>
+            <span class="legislation-chip" id="legislationResultStatus">En attente</span>
+          </div>
+
+          <p class="legislation-summary" id="legislationSummary"></p>
+
+          <ul class="legislation-points" id="legislationKeyPoints"></ul>
+
+          <p class="legislation-caution" id="legislationCaution"></p>
+
+          <div class="legislation-sources">
+            <span class="legislation-sources-label">Sources repérées</span>
+            <div class="legislation-source-list" id="legislationSources"></div>
+          </div>
+
+          <section class="legislation-nearby is-hidden" id="legislationNearby">
+            <div class="legislation-nearby-header">
+              <h4>Communes proches à regarder</h4>
+              <p id="legislationNearbyIntro">
+                Voici des alternatives proches qui semblent offrir un cadre plus favorable.
+              </p>
+            </div>
+            <div class="legislation-nearby-list" id="legislationNearbyList"></div>
+          </section>
+        </article>
+      </section>
+
       <section class="panel seasonality-panel full-width-panel">
         <div class="panel-header seasonality-header">
           <div>

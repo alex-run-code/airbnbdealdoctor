@@ -1,0 +1,3 @@
+.tools/
+supabase/functions/.env.local
+supabase/functions/.env
