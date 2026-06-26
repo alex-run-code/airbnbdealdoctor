@@ -71,6 +71,7 @@ const legislationResultCity = document.getElementById("legislationResultCity");
 const legislationResultMeta = document.getElementById("legislationResultMeta");
 const legislationResultStatus = document.getElementById("legislationResultStatus");
 const legislationSummary = document.getElementById("legislationSummary");
+const legislationSignals = document.getElementById("legislationSignals");
 const legislationKeyPoints = document.getElementById("legislationKeyPoints");
 const legislationCaution = document.getElementById("legislationCaution");
 const legislationSources = document.getElementById("legislationSources");
@@ -289,17 +290,6 @@ function getLegislationStatusConfig(status) {
   }
 }
 
-function formatConfidenceLabel(confidence) {
-  switch (confidence) {
-    case "high":
-      return "élevée";
-    case "low":
-      return "prudente";
-    default:
-      return "moyenne";
-  }
-}
-
 function toRadians(value) {
   return (value * Math.PI) / 180;
 }
@@ -471,6 +461,138 @@ async function invokeLegislationAnalysis(targetCommune, nearbyCommunes) {
   return data;
 }
 
+function getFactSignalDefinitions(facts) {
+  return [
+    {
+      key: "compensation",
+      icon: "layers",
+      label: "Compensation",
+      value: facts.compensationRequired ? "Oui" : "Non",
+      tone: facts.compensationRequired ? "negative" : "positive",
+      hint: facts.compensationRequired
+        ? "Le montage devient plus lourd et plus coûteux."
+        : "Aucune compensation lourde identifiée.",
+    },
+    {
+      key: "changeOfUse",
+      icon: "document",
+      label: "Changement d'usage",
+      value: facts.changeOfUseRequired ? "À prévoir" : "Non détecté",
+      tone: facts.changeOfUseRequired ? "warning" : "positive",
+      hint: facts.changeOfUseRequired
+        ? "Une démarche administrative locale semble nécessaire."
+        : "Pas de changement d'usage clair dans les sources trouvées.",
+    },
+    {
+      key: "quota",
+      icon: "gauge",
+      label: "Quota / plafond",
+      value: facts.quotaOrCap ? "Présent" : "Aucun signal",
+      tone: facts.quotaOrCap ? "negative" : "positive",
+      hint: facts.quotaOrCap
+        ? "Le volume de projets peut être limité localement."
+        : "Pas de quota local clair repéré.",
+    },
+    {
+      key: "feasibility",
+      icon: "spark",
+      label: "Faisabilité dédiée",
+      value: getFeasibilityLabel(facts.dedicatedRentalFeasibility),
+      tone: getFeasibilityTone(facts.dedicatedRentalFeasibility),
+      hint: getFeasibilityHint(facts.dedicatedRentalFeasibility),
+    },
+    {
+      key: "source",
+      icon: "shield",
+      label: "Base officielle",
+      value: facts.officialLocalRuleFound ? "Oui" : "Partielle",
+      tone: facts.officialLocalRuleFound ? "positive" : "warning",
+      hint: facts.officialLocalRuleFound
+        ? "Le verdict s'appuie sur au moins une source officielle exploitable."
+        : "Le verdict reste plus prudent faute de source locale solide.",
+    },
+  ];
+}
+
+function getFeasibilityLabel(value) {
+  switch (value) {
+    case "clear":
+      return "Claire";
+    case "conditional":
+      return "Conditionnelle";
+    case "difficult":
+      return "Difficile";
+    case "blocked":
+      return "Bloquée";
+    default:
+      return "À confirmer";
+  }
+}
+
+function getFeasibilityTone(value) {
+  switch (value) {
+    case "clear":
+      return "positive";
+    case "conditional":
+      return "warning";
+    case "difficult":
+    case "blocked":
+      return "negative";
+    default:
+      return "neutral";
+  }
+}
+
+function getFeasibilityHint(value) {
+  switch (value) {
+    case "clear":
+      return "Le modèle paraît jouable sans barrière lourde identifiée.";
+    case "conditional":
+      return "Le projet semble faisable, mais avec quelques conditions à cadrer.";
+    case "difficult":
+      return "Le projet paraît lourd ou risqué pour une stratégie dédiée.";
+    case "blocked":
+      return "Le modèle semble très contraint dans cette commune.";
+    default:
+      return "Les sources trouvées imposent encore une validation locale.";
+  }
+}
+
+function getSignalIcon(iconName) {
+  switch (iconName) {
+    case "layers":
+      return `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 4 4 8l8 4 8-4-8-4Zm-6.5 7.5L12 15l6.5-3.5M5.5 15 12 18.5 18.5 15" />
+        </svg>
+      `;
+    case "document":
+      return `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M8 3.5h6l4 4V20.5H8zM14 3.5v4h4M10.5 12h5M10.5 15.5h5" />
+        </svg>
+      `;
+    case "gauge":
+      return `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 16a7 7 0 1 1 14 0M12 16l3.5-3.5M8 18h8" />
+        </svg>
+      `;
+    case "spark":
+      return `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m12 3 1.9 4.6L18.5 9l-4.6 1.4L12 15l-1.9-4.6L5.5 9l4.6-1.4L12 3Z" />
+        </svg>
+      `;
+    default:
+      return `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 4.5 6.5 7v4.2c0 3.4 2.2 6.5 5.5 7.3 3.3-.8 5.5-3.9 5.5-7.3V7L12 4.5Zm0 4.2v4.6M12 16h.01" />
+        </svg>
+      `;
+  }
+}
+
 function renderLegislation() {
   const hasResult = Boolean(legislationState.result);
   const hasError = Boolean(legislationState.error);
@@ -503,12 +625,43 @@ function renderLegislation() {
   const statusConfig = getLegislationStatusConfig(target.status);
 
   legislationResultCity.textContent = target.cityName;
-  legislationResultMeta.textContent =
-    `${target.departmentName} · ${target.regionName} · Fiabilité ${formatConfidenceLabel(target.confidence)}`;
+  legislationResultMeta.textContent = `${target.departmentName} · ${target.regionName}`;
   legislationResultStatus.textContent = `${statusConfig.label} · ${statusConfig.tone}`;
   legislationResultStatus.className = `legislation-chip ${statusConfig.className}`;
   legislationSummary.textContent = target.summary;
   legislationCaution.textContent = target.caution;
+
+  legislationSignals.innerHTML = "";
+  getFactSignalDefinitions(target.facts).forEach((signal) => {
+    const article = document.createElement("article");
+    article.className = `legislation-signal-card legislation-signal-card--${signal.tone}`;
+
+    const icon = document.createElement("div");
+    icon.className = "legislation-signal-icon";
+    icon.innerHTML = getSignalIcon(signal.icon);
+
+    const body = document.createElement("div");
+    body.className = "legislation-signal-body";
+
+    const label = document.createElement("span");
+    label.className = "legislation-signal-label";
+    label.textContent = signal.label;
+
+    const value = document.createElement("strong");
+    value.className = "legislation-signal-value";
+    value.textContent = signal.value;
+
+    const hint = document.createElement("p");
+    hint.className = "legislation-signal-hint";
+    hint.textContent = signal.hint;
+
+    body.appendChild(label);
+    body.appendChild(value);
+    body.appendChild(hint);
+    article.appendChild(icon);
+    article.appendChild(body);
+    legislationSignals.appendChild(article);
+  });
 
   legislationKeyPoints.innerHTML = "";
   target.keyPoints.forEach((point) => {

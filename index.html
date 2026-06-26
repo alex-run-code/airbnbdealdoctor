@@ -271,7 +271,21 @@
         </div>
 
         <div class="legislation-state legislation-state--loading is-hidden" id="legislationLoadingState">
-          Analyse en cours...
+          <div class="legislation-loading-shell">
+            <div class="legislation-spinner" aria-hidden="true"></div>
+            <div class="legislation-loading-copy">
+              <strong>Analyse en cours...</strong>
+              <p>
+                On vérifie la commune, les sources officielles utiles et les alternatives
+                proches plus intéressantes.
+              </p>
+            </div>
+          </div>
+          <div class="legislation-loading-steps" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
         </div>
 
         <div class="legislation-state legislation-state--error is-hidden" id="legislationErrorState"></div>
@@ -287,6 +301,14 @@
           </div>
 
           <p class="legislation-summary" id="legislationSummary"></p>
+
+          <section class="legislation-signals">
+            <div class="legislation-signals-header">
+              <h4>5 signaux clés</h4>
+              <p>Les points qui pèsent le plus dans le verdict de la commune.</p>
+            </div>
+            <div class="legislation-signals-grid" id="legislationSignals"></div>
+          </section>
 
           <ul class="legislation-points" id="legislationKeyPoints"></ul>
 

@@ -369,6 +369,65 @@ body {
   color: #d9ceff;
 }
 
+.legislation-loading-shell {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.legislation-spinner {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 3px solid rgba(124, 92, 255, 0.2);
+  border-top-color: #7c5cff;
+  animation: legislation-spin 0.85s linear infinite;
+  flex-shrink: 0;
+}
+
+.legislation-loading-copy strong {
+  display: block;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.legislation-loading-copy p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.legislation-loading-steps {
+  margin-top: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.legislation-loading-steps span {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(124, 92, 255, 0.14),
+    rgba(255, 255, 255, 0.12),
+    rgba(36, 210, 181, 0.12)
+  );
+  background-size: 200% 100%;
+  animation: legislation-shimmer 1.4s linear infinite;
+}
+
+.legislation-loading-steps span:nth-child(1) {
+  width: 100%;
+}
+
+.legislation-loading-steps span:nth-child(2) {
+  width: 84%;
+}
+
+.legislation-loading-steps span:nth-child(3) {
+  width: 68%;
+}
+
 .legislation-state--error {
   color: #ffd4da;
   border-color: rgba(255, 107, 125, 0.24);
@@ -452,6 +511,116 @@ body {
   line-height: 1.75;
   color: #eef4ff;
   max-width: 72ch;
+}
+
+.legislation-signals {
+  margin-top: 22px;
+}
+
+.legislation-signals-header h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.legislation-signals-header p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.legislation-signals-grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.legislation-signal-card {
+  min-height: 164px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.legislation-signal-card--positive {
+  background: rgba(43, 225, 139, 0.08);
+  border-color: rgba(43, 225, 139, 0.18);
+}
+
+.legislation-signal-card--warning {
+  background: rgba(255, 184, 77, 0.08);
+  border-color: rgba(255, 184, 77, 0.18);
+}
+
+.legislation-signal-card--negative {
+  background: rgba(255, 107, 125, 0.08);
+  border-color: rgba(255, 107, 125, 0.18);
+}
+
+.legislation-signal-card--neutral {
+  background: rgba(124, 92, 255, 0.08);
+  border-color: rgba(124, 92, 255, 0.18);
+}
+
+.legislation-signal-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.legislation-signal-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.legislation-signal-card--positive .legislation-signal-icon {
+  color: #b8ffe8;
+}
+
+.legislation-signal-card--warning .legislation-signal-icon {
+  color: #ffd28f;
+}
+
+.legislation-signal-card--negative .legislation-signal-icon {
+  color: #ffd4da;
+}
+
+.legislation-signal-card--neutral .legislation-signal-icon {
+  color: #d9ceff;
+}
+
+.legislation-signal-body {
+  display: grid;
+  gap: 8px;
+}
+
+.legislation-signal-label {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.legislation-signal-value {
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.legislation-signal-hint {
+  margin: 0;
+  color: #dbe6f8;
+  font-size: 0.84rem;
+  line-height: 1.55;
 }
 
 .legislation-points {
@@ -573,6 +742,21 @@ body {
   margin: 10px 0 0;
   color: #dbe6f8;
   line-height: 1.6;
+}
+
+@keyframes legislation-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes legislation-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .ghost-button {
@@ -983,6 +1167,10 @@ body {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .legislation-signals-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .session-strip {
     align-items: flex-start;
     flex-direction: column;
@@ -1012,6 +1200,10 @@ body {
 
   .legislation-search,
   .legislation-nearby-list {
+    grid-template-columns: 1fr;
+  }
+
+  .legislation-signals-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1058,5 +1250,9 @@ body {
 
   .legislation-result-header {
     flex-direction: column;
+  }
+
+  .legislation-loading-shell {
+    align-items: flex-start;
   }
 }
